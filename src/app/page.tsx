@@ -24,11 +24,74 @@ export default function Home() {
 
   // 星の位置を初期化時に一度だけ生成
   const starPositions = useMemo(() => {
-    return Array(50).fill(null).map(() => ({
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      delay: Math.random() * 200
-    }));
+    const stars = [];
+    
+    // 1等星（最も明るく大きい）
+    for (let i = 0; i < 5; i++) {
+      stars.push({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        delay: Math.random() * 200,
+        duration: 60,
+        magnitude: 1,
+        size: 3,
+        opacity: 0.9
+      });
+    }
+
+    // 2等星
+    for (let i = 0; i < 10; i++) {
+      stars.push({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        delay: Math.random() * 200,
+        duration: 60,
+        magnitude: 2,
+        size: 2.5,
+        opacity: 0.8
+      });
+    }
+
+    // 3等星
+    for (let i = 0; i < 20; i++) {
+      stars.push({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        delay: Math.random() * 200,
+        duration: 60,
+        magnitude: 3,
+        size: 2,
+        opacity: 0.7
+      });
+    }
+
+    // 4等星
+    for (let i = 0; i < 40; i++) {
+      stars.push({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        delay: Math.random() * 200,
+        duration: 60,
+        magnitude: 4,
+        size: 1.5,
+        opacity: 0.6
+      });
+    }
+
+    // 5等星（最も暗く小さい）
+    for (let i = 0; i < 80; i++) {
+      stars.push({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        delay: Math.random() * 200,
+        duration: 60,
+        magnitude: 5,
+        size: 1,
+        opacity: 0.5
+      });
+    }
+
+    return stars;
   }, []);
 
   useEffect(() => {
@@ -66,8 +129,8 @@ export default function Home() {
         id: Date.now(),
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight * 0.5,
-        length: (Math.random() * 80 + 40) * 1.3,
-        angle: Math.random() * 60 + 15,
+        length: (Math.random() * 80 + 40) * 1.3 * 1.2,
+        angle: 30,
         speed: Math.random() * 3 + 2,
         opacity: 1,
       }
@@ -87,7 +150,7 @@ export default function Home() {
     }
 
     const interval = setInterval(() => {
-      if (Math.random() < 0.36) {
+      if (Math.random() < 0.47) {
         generateShootingStar()
       }
     }, 2000)
@@ -160,15 +223,15 @@ export default function Home() {
           transform: "translate(-50%, -50%)",
         }}
       >
-        <div className="relative">
-          <div className="absolute w-8 h-0.5 bg-green-400 -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-green-400/50"></div>
-          <div className="absolute w-0.5 h-8 bg-green-400 -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-green-400/50"></div>
-          <div className="absolute w-1 h-1 bg-red-500 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-red-500/50"></div>
+        <div className="relative animate-pulse">
+          <div className="absolute w-8 h-0.5 bg-green-400 -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-green-400/50 animate-pulse"></div>
+          <div className="absolute w-0.5 h-8 bg-green-400 -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-green-400/50 animate-pulse"></div>
+          <div className="absolute w-1 h-1 bg-red-500 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-red-500/50 animate-ping"></div>
           <div className="absolute -translate-x-1/2 -translate-y-1/2">
-            <div className="absolute -top-4 -left-4 w-2 h-2 border-t-2 border-l-2 border-green-400"></div>
-            <div className="absolute -top-4 -right-4 w-2 h-2 border-t-2 border-r-2 border-green-400"></div>
-            <div className="absolute -bottom-4 -left-4 w-2 h-2 border-b-2 border-l-2 border-green-400"></div>
-            <div className="absolute -bottom-4 -right-4 w-2 h-2 border-b-2 border-r-2 border-green-400"></div>
+            <div className="absolute -top-4 -left-4 w-2 h-2 border-t-2 border-l-2 border-green-400 animate-pulse"></div>
+            <div className="absolute -top-4 -right-4 w-2 h-2 border-t-2 border-r-2 border-green-400 animate-pulse"></div>
+            <div className="absolute -bottom-4 -left-4 w-2 h-2 border-b-2 border-l-2 border-green-400 animate-pulse"></div>
+            <div className="absolute -bottom-4 -right-4 w-2 h-2 border-b-2 border-r-2 border-green-400 animate-pulse"></div>
           </div>
         </div>
       </div>
@@ -179,15 +242,16 @@ export default function Home() {
           {starPositions.map((pos, i) => (
             <div
               key={i}
-              className="absolute bg-white rounded-full animate-twinkle"
+              className="absolute bg-white rounded-full"
               style={{
-                width: '2px',
-                height: '2px',
+                width: `${pos.size}px`,
+                height: `${pos.size}px`,
                 left: `${pos.left}%`,
                 top: `${pos.top}%`,
-                opacity: 0.4,
+                opacity: pos.opacity,
+                animation: `moveStar ${pos.duration}s linear infinite`,
                 animationDelay: `${pos.delay}s`,
-                animationDuration: `${Math.random() * 15 + 45}s`,
+                boxShadow: `0 0 ${pos.size * 2}px rgba(255, 255, 255, ${pos.opacity * 0.5})`,
               }}
             />
           ))}
@@ -389,6 +453,15 @@ export default function Home() {
 
         .animate-twinkle {
           animation: twinkle infinite ease-in-out;
+        }
+
+        @keyframes moveStar {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(100vw);
+          }
         }
       `}</style>
     </>
