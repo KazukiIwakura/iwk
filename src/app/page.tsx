@@ -150,7 +150,7 @@ export default function Home() {
     }
 
     const interval = setInterval(() => {
-      if (Math.random() < 0.47) {
+      if (Math.random() < 0.6) {
         generateShootingStar()
       }
     }, 2000)
@@ -321,7 +321,7 @@ export default function Home() {
               <ul className="list-none p-0 space-y-2 text-sm jp">
               <li className="flex items-center">
                   <span className="mr-2">◆</span>
-                  <span>（???）</span>
+                  <span>(???)</span>
                   <span className="text-[#909090] ml-2">次の挑戦を模索中！</span>
                 </li>
                 <li className="flex items-center">
@@ -366,18 +366,18 @@ export default function Home() {
             </motion.div>
           </motion.div>
         </div>
+      </div>
 
-        {/* プロフィール画像 - デスクトップ版では右端に表示 */}
-        <div className="hidden md:block absolute top-6 right-6 w-24 h-24">
-          <Image
-            src="/avatar.png"
-            alt="Profile"
-            width={120}
-            height={120}
-            className="object-cover"
-            priority
-          />
-        </div>
+      {/* プロフィール画像 - デスクトップ版では右端に表示 */}
+      <div className="hidden md:block absolute top-6 right-6 w-24 h-24">
+        <Image
+          src="/avatar.png"
+          alt="Profile"
+          width={120}
+          height={120}
+          className="object-cover"
+          priority
+        />
       </div>
 
       <style jsx global>{`
