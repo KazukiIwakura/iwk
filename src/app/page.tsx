@@ -278,35 +278,47 @@ export default function Home() {
 
         <div className="w-full max-w-4xl mx-auto">
           <motion.div className="mb-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h1 className="font-bold text-2xl mb-2">
+            <h1 className="font-bold text-2xl mb-2 jp">
               {typedText}
               <span className="caret">_</span>
             </h1>
-            <p className="text-sm text-[#909090]">Ehime→Fukuoka→TOKYO</p>
+            <p className="text-sm text-[#909090] jp">Ehime→Fukuoka→TOKYO</p>
           </motion.div>
+
+          {/* プロフィール画像 - モバイル版では名前の下に表示 */}
+          <div className="md:hidden mb-8">
+            <Image
+              src="/avatar.png"
+              alt="Profile"
+              width={120}
+              height={120}
+              className="object-cover"
+              priority
+            />
+          </div>
 
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-10">
             <motion.div variants={itemVariants} className="mb-8">
-              <h2 className="font-bold mb-2 text-base">About</h2>
-              <p className="text-sm text-[#ffffff] mb-4 leading-relaxed">
+              <h2 className="font-bold mb-2 text-base jp">About</h2>
+              <p className="text-sm text-[#ffffff] mb-4 leading-relaxed jp">
               VC（β_VentureCapial）にEIRで在籍したあとに、3Dアバター系のスタートアップを創業して今に至ります。<br />
               気軽に、DM（見逃すかもですが）からお声掛け頂ければと思います!
               </p>
             </motion.div>
 
             <motion.div variants={itemVariants} className="mb-8">
-              <h2 className="font-bold mb-2 text-base">Interest</h2>
-              <ul className="list-none p-0 space-y-1 text-sm text-[#ffffff]">
+              <h2 className="font-bold mb-2 text-base jp">Interest</h2>
+              <ul className="list-none p-0 space-y-1 text-sm text-[#ffffff] jp">
                 <li>- Startup/VC</li>
                 <li>- ディープテック</li>
-                <li>- 宇宙・ロボット （防衛分野）</li>
-                <li>- 原子力・エネルギー</li>
+                <li>- 宇宙・ロボット（防衛分野）</li>
+                <li>- 原子力・太陽光エネルギー</li>
               </ul>
             </motion.div>
 
             <motion.div variants={itemVariants} className="mb-8">
-              <h2 className="font-bold mb-2 text-base">Career</h2>
-              <ul className="list-none p-0 space-y-2 text-sm">
+              <h2 className="font-bold mb-2 text-base jp">Career</h2>
+              <ul className="list-none p-0 space-y-2 text-sm jp">
               <li className="flex items-center">
                   <span className="mr-2">◆</span>
                   <span>（???）</span>
@@ -326,8 +338,8 @@ export default function Home() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="mb-8">
-              <h2 className="font-bold mb-2 text-base">Hobby</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <h2 className="font-bold mb-2 text-base jp">Hobby</h2>
+              <div className="grid grid-cols-2 gap-4 jp">
                 <div className="border border-[#909090] p-3 text-sm hover-box">アニメ/漫画</div>
                 <div className="border border-[#909090] p-3 text-sm hover-box">大学駅伝 （NEW!）</div>
                 <div className="border border-[#909090] p-3 text-sm hover-box">欧州サッカー</div>
@@ -335,7 +347,7 @@ export default function Home() {
               </div>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="flex space-x-4 text-x">
+            <motion.div variants={itemVariants} className="flex space-x-4 text-x jp">
               <Link href="https://x.com/kazuki_iwakura" className="text-[#ffffff]" target="_blank" rel="noopener noreferrer">
                 X
               </Link>
@@ -355,7 +367,8 @@ export default function Home() {
           </motion.div>
         </div>
 
-        <div className="absolute top-6 right-6 w-24 h-24">
+        {/* プロフィール画像 - デスクトップ版では右端に表示 */}
+        <div className="hidden md:block absolute top-6 right-6 w-24 h-24">
           <Image
             src="/avatar.png"
             alt="Profile"
