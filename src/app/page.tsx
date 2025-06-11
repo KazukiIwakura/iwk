@@ -251,7 +251,8 @@ export default function Home() {
                 opacity: pos.opacity,
                 animation: `moveStar ${pos.duration}s linear infinite`,
                 animationDelay: `${pos.delay}s`,
-                boxShadow: `0 0 ${pos.size * 2}px rgba(255, 255, 255, ${pos.opacity * 0.5})`,
+                boxShadow: `0 0 ${pos.size * 2}px rgb(255, 255, 255)`,
+                filter: 'brightness(1)',
               }}
             />
           ))}
@@ -268,9 +269,10 @@ export default function Home() {
                 top: star.y,
                 width: star.length,
                 height: 2.4,
-                background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, ${star.opacity}), transparent)`,
+                background: `linear-gradient(90deg, transparent, rgb(255, 255, 255), transparent)`,
                 transform: `rotate(${star.angle}deg)`,
-                boxShadow: `0 0 6px rgba(255, 255, 255, ${star.opacity * 0.8})`,
+                boxShadow: `0 0 8px rgb(255, 255, 255)`,
+                filter: 'brightness(1)',
               }}
             />
           ))}
@@ -347,20 +349,20 @@ export default function Home() {
               </div>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="flex space-x-4 text-x jp">
-              <Link href="https://x.com/kazuki_iwakura" className="text-[#ffffff]" target="_blank" rel="noopener noreferrer">
+            <motion.div variants={itemVariants} className="flex flex-wrap gap-x-4 gap-y-6 text-x jp">
+              <Link href="https://x.com/kazuki_iwakura" className="text-[#ffffff] whitespace-nowrap" target="_blank" rel="noopener noreferrer">
                 X
               </Link>
-              <Link href="https://note.com/king_kazu11/all" className="text-[#ffffff]" target="_blank" rel="noopener noreferrer">
+              <Link href="https://note.com/king_kazu11/all" className="text-[#ffffff] whitespace-nowrap" target="_blank" rel="noopener noreferrer">
                 note
               </Link>
-              <Link href="https://www.facebook.com/iwakurakazuki/" className="text-[#ffffff]" target="_blank" rel="noopener noreferrer">
+              <Link href="https://www.facebook.com/iwakurakazuki/" className="text-[#ffffff] whitespace-nowrap" target="_blank" rel="noopener noreferrer">
                 Facebook
               </Link>
-              <Link href="https://sizu.me/iwakura" className="text-[#ffffff]" target="_blank" rel="noopener noreferrer">
+              <Link href="https://sizu.me/iwakura" className="text-[#ffffff] whitespace-nowrap" target="_blank" rel="noopener noreferrer">
                 sizu.me
               </Link>
-              <Link href="https://www.linkedin.com/in/%E4%B8%80%E6%9A%89-%E5%B2%A9%E5%80%89/" className="text-[#ffffff]" target="_blank" rel="noopener noreferrer">
+              <Link href="https://www.linkedin.com/in/%E4%B8%80%E6%9A%89-%E5%B2%A9%E5%80%89/" className="text-[#ffffff] whitespace-nowrap" target="_blank" rel="noopener noreferrer">
                 LinkedIn
               </Link>
             </motion.div>
@@ -390,6 +392,7 @@ export default function Home() {
           padding: 0;
           font-weight: bold;
           font-family: 'Noto Sans JP', sans-serif;
+          color-scheme: light;
         }
 
         ::selection {
@@ -408,7 +411,7 @@ export default function Home() {
           position: absolute;
           width: 100%;
           height: 1px;
-          bottom: -2px;
+          bottom: -1px;
           left: 0;
           background-color: #909090;
           transform: scaleX(1);
