@@ -1,10 +1,20 @@
 "use client"
 
+import { useEffect, useState, useMemo, useCallback } from "react"
 import Head from "next/head"
 import Link from "next/link"
 import Image from "next/image"
-import { useEffect, useState, useMemo } from "react"
 import { motion } from "framer-motion"
+
+interface StarPosition {
+  left: number
+  top: number
+  delay: number
+  duration: number
+  magnitude: number
+  size: number
+  opacity: number
+}
 
 interface ShootingStar {
   id: number
@@ -16,15 +26,21 @@ interface ShootingStar {
   opacity: number
 }
 
+interface MousePosition {
+  x: number
+  y: number
+}
+
 export default function Home() {
   const [typedText, setTypedText] = useState("")
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [mousePosition, setMousePosition] = useState<MousePosition>({ x: 0, y: 0 })
   const [shootingStars, setShootingStars] = useState<ShootingStar[]>([])
+  const [isMounted, setIsMounted] = useState(false)
   const fullName = "岩倉一暉/Iwakura Kazuki"
 
   // 星の位置を初期化時に一度だけ生成
-  const starPositions = useMemo(() => {
-    const stars = [];
+  const starPositions = useMemo<StarPosition[]>(() => {
+    const stars: StarPosition[] = [];
     
     // 1等星（最も明るく大きい）
     for (let i = 0; i < 5; i++) {
@@ -94,86 +110,165 @@ export default function Home() {
     return stars;
   }, []);
 
+  // タイピングアニメーション
   useEffect(() => {
-    let currentIndex = 0
-    const typingInterval = setInterval(() => {
+    if (!isMounted) return;
+    
+    let currentIndex = 0;
+    let timeoutId: NodeJS.Timeout;
+
+    const typeNextCharacter = () => {
       if (currentIndex <= fullName.length) {
-        setTypedText(fullName.substring(0, currentIndex))
-        currentIndex++
-      } else {
-        clearInterval(typingInterval)
+        setTypedText(fullName.substring(0, currentIndex));
+        currentIndex++;
+        timeoutId = setTimeout(typeNextCharacter, 150);
       }
-    }, 150)
+    };
 
-    return () => clearInterval(typingInterval)
-  }, [])
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
-
-    document.addEventListener("mousemove", handleMouseMove)
-    document.body.style.cursor = "none"
+    timeoutId = setTimeout(typeNextCharacter, 150);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.body.style.cursor = "auto"
-    }
-  }, [])
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [fullName, isMounted]);
 
-  // Generate shooting stars
+  // マウス移動の追跡
   useEffect(() => {
-    const generateShootingStar = () => {
-      const newShootingStar: ShootingStar = {
-        id: Date.now(),
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight * 0.5,
-        length: (Math.random() * 80 + 40) * 1.3 * 1.2,
-        angle: 30,
-        speed: Math.random() * 3 + 2,
-        opacity: 1,
+    if (typeof window === 'undefined') return;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      try {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+      } catch (error) {
+        console.error('Error handling mouse move:', error);
       }
+    };
 
-      setShootingStars((prev) => [...prev, newShootingStar])
-
-      setTimeout(() => {
-        setShootingStars((prev) => prev.filter((s) => s.id !== newShootingStar.id))
-      }, 2000)
+    try {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.body.style.cursor = "none";
+    } catch (error) {
+      console.error('Error setting up mouse move listener:', error);
     }
 
+    return () => {
+      try {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.body.style.cursor = "auto";
+      } catch (error) {
+        console.error('Error cleaning up mouse move listener:', error);
+      }
+    };
+  }, []);
+
+  // 流れ星の生成
+  const generateShootingStar = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    
+    const newShootingStar: ShootingStar = {
+      id: Date.now() + Math.random(),
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight * 0.5,
+      length: (Math.random() * 80 + 40) * 1.3 * 1.2,
+      angle: 30,
+      speed: Math.random() * 3 + 2,
+      opacity: 1,
+    };
+
+    return newShootingStar;
+  }, []);
+
+  // 流れ星のアニメーション
+  useEffect(() => {
+    if (!isMounted || typeof window === 'undefined') return;
+    
+    const shootingStarIds = new Set<number>();
+    
+    const addShootingStar = () => {
+      const newStar = generateShootingStar();
+      if (newStar) {
+        shootingStarIds.add(newStar.id);
+        setShootingStars(prev => [...prev, newStar]);
+        
+        // 流れ星を削除
+        setTimeout(() => {
+          setShootingStars(prev => prev.filter(star => star.id !== newStar.id));
+          shootingStarIds.delete(newStar.id);
+        }, 2000);
+      }
+    };
+    
     // 初期表示時に3つの流れ星を生成
+    const initialTimeouts: NodeJS.Timeout[] = [];
     for (let i = 0; i < 3; i++) {
-      setTimeout(() => {
-        generateShootingStar()
-      }, i * 300) // 300ms間隔で生成
+      const timeout = setTimeout(() => {
+        addShootingStar();
+      }, i * 300);
+      initialTimeouts.push(timeout);
     }
-
+    
+    // 定期的に流れ星を生成
     const interval = setInterval(() => {
       if (Math.random() < 0.6) {
-        generateShootingStar()
+        addShootingStar();
       }
-    }, 2000)
+    }, 2000);
+    
+    return () => {
+      initialTimeouts.forEach(clearTimeout);
+      clearInterval(interval);
+      // クリーンアップ時に全ての流れ星を削除
+      setShootingStars([]);
+    };
+  }, [generateShootingStar, isMounted]);
 
-    return () => clearInterval(interval)
-  }, [])
-
-  // Animate shooting stars
+  // 流れ星のアニメーション更新
   useEffect(() => {
-    const interval = setInterval(() => {
-      setShootingStars((prevStars) =>
-        prevStars.map((star) => ({
-          ...star,
-          x: star.x + Math.cos((star.angle * Math.PI) / 180) * star.speed,
-          y: star.y + Math.sin((star.angle * Math.PI) / 180) * star.speed,
-          opacity: star.opacity - 0.01,
-        })),
-      )
-    }, 16)
+    if (!isMounted) return;
+    
+    let animationFrameId: number;
+    let lastTime = 0;
+    const fps = 60;
+    const frameDuration = 1000 / fps;
+    
+    const updateShootingStars = (time: number) => {
+      if (!lastTime) lastTime = time;
+      const deltaTime = time - lastTime;
+      
+      if (deltaTime >= frameDuration) {
+        setShootingStars(prevStars => {
+          if (prevStars.length === 0) return [];
+          
+          return prevStars.map(star => ({
+            ...star,
+            x: star.x + Math.cos((star.angle * Math.PI) / 180) * star.speed,
+            y: star.y + Math.sin((star.angle * Math.PI) / 180) * star.speed,
+            opacity: Math.max(0, star.opacity - 0.005),
+          }));
+        });
+        
+        lastTime = time - (deltaTime % frameDuration);
+      }
+      
+      animationFrameId = requestAnimationFrame(updateShootingStars);
+    };
+    
+    animationFrameId = requestAnimationFrame(updateShootingStars);
+    
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isMounted]);
 
-    return () => clearInterval(interval)
-  }, [])
+  // マウント状態の設定
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
+  // アニメーションのバリアント
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -195,22 +290,32 @@ export default function Home() {
     },
   }
 
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-pulse text-white">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
-        <title>@ragojose</title>
+        <title>岩倉一暉 / Iwakura Kazuki</title>
         <meta
           name="description"
-          content=""
+          content="岩倉一暉のポートフォリオサイト。スタートアップ、VC、テクノロジーに関する情報を発信しています。"
         />
         <link rel="icon" href="/favicon.png" />
-        <meta property="og:title" content="@ragojose" />
+        <meta property="og:title" content="岩倉一暉 / Iwakura Kazuki" />
         <meta
           property="og:description"
-          content=""
+          content="スタートアップ、VC、テクノロジーに関する情報を発信しています。"
         />
-        <meta property="og:url" content="https://ragojose.com" />
+        <meta property="og:url" content="https://iwakura-kazuki.com" />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="/ogp.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet" />
       </Head>
 
@@ -259,7 +364,7 @@ export default function Home() {
         </div>
 
         {/* Shooting Stars */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           {shootingStars.map((star) => (
             <div
               key={star.id}
@@ -346,6 +451,18 @@ export default function Home() {
                 <div className="border border-[#909090] p-3 text-sm hover-box">大学駅伝 （NEW!）</div>
                 <div className="border border-[#909090] p-3 text-sm hover-box">欧州サッカー</div>
                 <div className="border border-[#909090] p-3 text-sm hover-box">執筆活動</div>
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="mb-8">
+              <h2 className="font-bold mb-2 text-base jp">Music Editor</h2>
+              <div className="w-full h-[500px] border border-[#909090] rounded-lg overflow-hidden">
+                <iframe
+                  src="https://strudel.cc/#Ly8gImNvYXN0bGluZSIgQGJ5IGVkZHlmbHV4Ci8vIEB2ZXJzaW9uIDEuMApzYW1wbGVzKCdnaXRodWI6ZWRkeWZsdXgvY3JhdGUnKQpzZXRjcHMoLjc1KQpsZXQgY2hvcmRzID0gY2hvcmQoIjxCYm05IEZtOT4vNCIpLmRpY3QoJ2lyZWFsJykKc3RhY2soCiAgc3RhY2soIC8vIERSVU1TCiAgICBzKCJiZCIpLnN0cnVjdCgiPFt4KjwxIDI%2BIFt%2BQDMgeF1dIHg%2BIiksCiAgICBzKCJ%2BIFtyaW0sIHNkOjwyIDM%2BXSIpLnJvb20oIjwwIC4yPiIpLAogICAgbigiWzAgPDEgMyAzIDE%2BXSo8MiEzIDQ%2BIikucygiaGgiKSwKICAgIHMoInJkOjwxITMgMj4qMiIpLm1hc2soIjwwIDAgMSAxPi8xNiIpLmdhaW4oLjUpCiAgKS5iYW5rKCdjcmF0ZScpCiAgLm1hc2soIjxbMCAxXSAxIDEgMT4vMTYiLmVhcmx5KC41KSkKICAsIC8vIENIT1JEUwogIGNob3Jkcy5vZmZzZXQoLTEpLnZvaWNpbmcoKS5zKCJnbV9lcGlhbm8xOjEiKQogIC5waGFzZXIoNCkucm9vbSguNSkKICAsIC8vIE1FTE9EWQogIG4oIjwwITMgMSoyPiIpLnNldChjaG9yZHMpLm1vZGUoInJvb3Q6ZzEiKQogIC52b2ljaW5nKCkucygiZ21fYWNvdXN0aWNfYmFzcyIpLAogIGNob3Jkcy5uKCJbMCA8NCAzIDwyIDU%2BPioyXSg8MyA1Piw4KSIpCiAgLmFuY2hvcigiRDUiKS52b2ljaW5nKCkKICAuc2VnbWVudCg0KS5jbGlwKHJhbmQucmFuZ2UoLjQsLjgpKQogIC5yb29tKC43NSkuc2hhcGUoLjMpLmRlbGF5KC4yNSkKICAuZm0oc2luZS5yYW5nZSgzLDgpLnNsb3coOCkpCiAgLmxwZihzaW5lLnJhbmdlKDUwMCwxMDAwKS5zbG93KDgpKS5scHEoNSkKICAucmFyZWx5KHBseSgiMiIpKS5jaHVuayg0LCBmYXN0KDIpKQogIC5nYWluKHBlcmxpbi5yYW5nZSguNiwgLjkpKQogIC5tYXNrKCI8MCAxIDEgMD4vMTYiKQopCi5sYXRlKCJbMCAuMDFdKjQiKS5sYXRlKCJbMCAuMDFdKjIiKS5zaXplKDQp"
+                  width="100%"
+                  height="100%"
+                  className="rounded-lg"
+                />
               </div>
             </motion.div>
 
