@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@strudel/repl": "^1.2.3",
     "@strudel/web": "^1.2.3",
     "framer-motion": "^12.16.0",
@@ -21,6 +22,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.29.0",
+    "eslint-config-next": "^15.3.4",
     "tailwindcss": "^4",
     "typescript": "5.8.3"
   }

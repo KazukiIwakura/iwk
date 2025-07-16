@@ -41,71 +41,27 @@ export default function Home() {
   // 星の位置を初期化時に一度だけ生成
   const starPositions = useMemo<StarPosition[]>(() => {
     const stars: StarPosition[] = [];
-    
-    // 1等星（最も明るく大きい）
-    for (let i = 0; i < 5; i++) {
-      stars.push({
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        delay: Math.random() * 200,
-        duration: 60,
-        magnitude: 1,
-        size: 3,
-        opacity: 0.9
-      });
-    }
+    const magnitudes = [
+      { count: 3, magnitude: 1, size: 2.5, opacity: 0.9, duration: () => Math.random() * 30 + 50 }, // 50-80s
+      { count: 6, magnitude: 2, size: 2, opacity: 0.8, duration: () => Math.random() * 30 + 70 }, // 70-100s
+      { count: 12, magnitude: 3, size: 1.5, opacity: 0.7, duration: () => Math.random() * 30 + 90 }, // 90-120s
+      { count: 24, magnitude: 4, size: 1, opacity: 0.6, duration: () => Math.random() * 30 + 110 }, // 110-140s
+      { count: 48, magnitude: 5, size: 0.5, opacity: 0.5, duration: () => Math.random() * 30 + 130 }, // 130-160s
+    ];
 
-    // 2等星
-    for (let i = 0; i < 10; i++) {
-      stars.push({
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        delay: Math.random() * 200,
-        duration: 60,
-        magnitude: 2,
-        size: 2.5,
-        opacity: 0.8
-      });
-    }
-
-    // 3等星
-    for (let i = 0; i < 20; i++) {
-      stars.push({
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        delay: Math.random() * 200,
-        duration: 60,
-        magnitude: 3,
-        size: 2,
-        opacity: 0.7
-      });
-    }
-
-    // 4等星
-    for (let i = 0; i < 40; i++) {
-      stars.push({
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        delay: Math.random() * 200,
-        duration: 60,
-        magnitude: 4,
-        size: 1.5,
-        opacity: 0.6
-      });
-    }
-
-    // 5等星（最も暗く小さい）
-    for (let i = 0; i < 80; i++) {
-      stars.push({
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        delay: Math.random() * 200,
-        duration: 60,
-        magnitude: 5,
-        size: 1,
-        opacity: 0.5
-      });
-    }
+    magnitudes.forEach(m => {
+      for (let i = 0; i < m.count; i++) {
+        stars.push({
+          left: Math.random() * 100,
+          top: Math.random() * 100,
+          delay: Math.random() * 10,
+          duration: m.duration(),
+          magnitude: m.magnitude,
+          size: m.size,
+          opacity: m.opacity
+        });
+      }
+    });
 
     return stars;
   }, []);
@@ -132,92 +88,54 @@ export default function Home() {
     };
   }, [fullName, isMounted]);
 
-  // マウス移動の追跡
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      try {
-        setMousePosition({ x: e.clientX, y: e.clientY });
-      } catch (error) {
-        console.error('Error handling mouse move:', error);
-      }
-    };
+  
 
-    try {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.body.style.cursor = "none";
-    } catch (error) {
-      console.error('Error setting up mouse move listener:', error);
-    }
-
-    return () => {
-      try {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.body.style.cursor = "auto";
-      } catch (error) {
-        console.error('Error cleaning up mouse move listener:', error);
-      }
-    };
-  }, []);
-
-  // 流れ星の生成
+  // 流れ星の生成（最適化版）
   const generateShootingStar = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    
+    if (typeof window === 'undefined' || shootingStars.length >= 1) return null;
+
+    const angle = -45; // 右上から左下への固定角度
+    const speed = Math.random() * 2 + 3; // 3-5の範囲の速度
+    const length = Math.random() * 150 + 100; // 100-250pxの長さ
+
     const newShootingStar: ShootingStar = {
       id: Date.now() + Math.random(),
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight * 0.5,
-      length: (Math.random() * 80 + 40) * 1.3 * 1.2,
-      angle: 30,
-      speed: Math.random() * 3 + 2,
+      x: Math.random() * window.innerWidth + window.innerWidth * 0.2, // 画面右側から出現
+      y: Math.random() * -window.innerHeight * 0.5, // 画面上部から出現
+      length: length,
+      angle: angle,
+      speed: speed,
       opacity: 1,
     };
 
     return newShootingStar;
-  }, []);
+  }, [shootingStars.length]);
 
   // 流れ星のアニメーション
   useEffect(() => {
     if (!isMounted || typeof window === 'undefined') return;
     
-    const shootingStarIds = new Set<number>();
-    
     const addShootingStar = () => {
       const newStar = generateShootingStar();
       if (newStar) {
-        shootingStarIds.add(newStar.id);
         setShootingStars(prev => [...prev, newStar]);
         
         // 流れ星を削除
         setTimeout(() => {
           setShootingStars(prev => prev.filter(star => star.id !== newStar.id));
-          shootingStarIds.delete(newStar.id);
-        }, 2000);
+        }, 4000); // 4秒後に削除
       }
     };
     
-    // 初期表示時に3つの流れ星を生成
-    const initialTimeouts: NodeJS.Timeout[] = [];
-    for (let i = 0; i < 3; i++) {
-      const timeout = setTimeout(() => {
-        addShootingStar();
-      }, i * 300);
-      initialTimeouts.push(timeout);
-    }
-    
     // 定期的に流れ星を生成
     const interval = setInterval(() => {
-      if (Math.random() < 0.6) {
+      if (Math.random() < 0.5) { // 50%の確率で生成
         addShootingStar();
       }
-    }, 2000);
+    }, 5000); // 5秒ごとに試行
     
     return () => {
-      initialTimeouts.forEach(clearTimeout);
       clearInterval(interval);
-      // クリーンアップ時に全ての流れ星を削除
       setShootingStars([]);
     };
   }, [generateShootingStar, isMounted]);
@@ -300,46 +218,9 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>岩倉一暉 / Iwakura Kazuki</title>
-        <meta
-          name="description"
-          content="岩倉一暉のポートフォリオサイト。スタートアップ、VC、テクノロジーに関する情報を発信しています。"
-        />
-        <link rel="icon" href="/favicon.png" />
-        <meta property="og:title" content="岩倉一暉 / Iwakura Kazuki" />
-        <meta
-          property="og:description"
-          content="スタートアップ、VC、テクノロジーに関する情報を発信しています。"
-        />
-        <meta property="og:url" content="https://iwakura-kazuki.com" />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="/ogp.jpg" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet" />
-      </Head>
+      
 
-      {/* Custom FPS Crosshair Cursor */}
-      <div
-        className="fixed pointer-events-none z-50 mix-blend-difference"
-        style={{
-          left: mousePosition.x,
-          top: mousePosition.y,
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-        <div className="relative animate-pulse">
-          <div className="absolute w-8 h-0.5 bg-green-400 -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-green-400/50 animate-pulse"></div>
-          <div className="absolute w-0.5 h-8 bg-green-400 -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-green-400/50 animate-pulse"></div>
-          <div className="absolute w-1 h-1 bg-red-500 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-red-500/50 animate-ping"></div>
-          <div className="absolute -translate-x-1/2 -translate-y-1/2">
-            <div className="absolute -top-4 -left-4 w-2 h-2 border-t-2 border-l-2 border-green-400 animate-pulse"></div>
-            <div className="absolute -top-4 -right-4 w-2 h-2 border-t-2 border-r-2 border-green-400 animate-pulse"></div>
-            <div className="absolute -bottom-4 -left-4 w-2 h-2 border-b-2 border-l-2 border-green-400 animate-pulse"></div>
-            <div className="absolute -bottom-4 -right-4 w-2 h-2 border-b-2 border-r-2 border-green-400 animate-pulse"></div>
-          </div>
-        </div>
-      </div>
+      
 
       <div className="min-h-screen bg-black text-white p-6 font-mono flex flex-col items-start justify-start relative">
         {/* Starry Background */}
@@ -354,30 +235,29 @@ export default function Home() {
                 left: `${pos.left}%`,
                 top: `${pos.top}%`,
                 opacity: pos.opacity,
-                animation: `moveStar ${pos.duration}s linear infinite`,
-                animationDelay: `${pos.delay}s`,
-                boxShadow: `0 0 ${pos.size * 2}px rgb(255, 255, 255)`,
-                filter: 'brightness(1)',
+                animation: `moveStar ${pos.duration}s linear infinite, twinkle ${Math.random() * 5 + 3}s ease-in-out infinite`,
+                animationDelay: `${pos.delay}s, ${Math.random() * 3}s`,
+                boxShadow: `0 0 ${pos.size * 1.5}px rgba(255, 255, 255, 0.8)`,
               }}
             />
           ))}
         </div>
 
         {/* Shooting Stars */}
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {shootingStars.map((star) => (
             <div
               key={star.id}
-              className="absolute"
+              className="absolute h-0.5 bg-gradient-to-r from-transparent via-white to-transparent"
               style={{
                 left: star.x,
                 top: star.y,
                 width: star.length,
-                height: 2.4,
-                background: `linear-gradient(90deg, transparent, rgb(255, 255, 255), transparent)`,
-                transform: `rotate(${star.angle}deg)`,
-                boxShadow: `0 0 8px rgb(255, 255, 255)`,
-                filter: 'brightness(1)',
+                opacity: star.opacity,
+                transform: `rotate(${star.angle}deg) translateX(-50%)`,
+                transformOrigin: 'right center',
+                boxShadow: '0 0 10px 2px rgba(255, 255, 255, 0.6)',
+                filter: 'blur(1px)',
               }}
             />
           ))}
@@ -508,7 +388,6 @@ export default function Home() {
           margin: 0;
           padding: 0;
           font-weight: bold;
-          font-family: 'Noto Sans JP', sans-serif;
           color-scheme: light;
         }
 
@@ -567,33 +446,22 @@ export default function Home() {
         }
 
         @keyframes twinkle {
-          0% {
-            opacity: 0.3;
-          }
-          25% {
-            opacity: 0.4;
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.6;
           }
           50% {
-            opacity: 0.35;
+            transform: scale(1.2);
+            opacity: 1;
           }
-          75% {
-            opacity: 0.4;
-          }
-          100% {
-            opacity: 0.3;
-          }
-        }
-
-        .animate-twinkle {
-          animation: twinkle infinite ease-in-out;
         }
 
         @keyframes moveStar {
-          0% {
-            transform: translateX(0);
+          from {
+            transform: translate(-10vw, -10vh);
           }
-          100% {
-            transform: translateX(100vw);
+          to {
+            transform: translate(110vw, 110vh);
           }
         }
       `}</style>
